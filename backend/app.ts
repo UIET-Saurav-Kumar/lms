@@ -2,6 +2,7 @@ require('dotenv').config()
 import express, { NextFunction, Request, Response } from 'express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import { ErrorMiddleware } from './middleware/errorMiddleware'
 
 export const app  = express()
 
@@ -34,3 +35,4 @@ app.all('*' , (req : Request , res : Response , next : NextFunction) => {
       })
 })
 
+app.use(ErrorMiddleware)
