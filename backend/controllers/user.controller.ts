@@ -10,6 +10,8 @@ import sendEmail from "../utils/sendMail";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { redis } from "../utils/redis";
 import { getUserById } from "../services/user.service"; 
+import cloudinary from "cloudinary";
+
 
 interface IRegistrationBody { 
     name : string;
@@ -211,6 +213,8 @@ export const updateAccessToken = CatchAsyncError( async (req : Request , res : R
 
         const refreshToken = jwt.sign({id : user._id} , process.env.REFRESH_TOKEN as string , {expiresIn : '3d'})
         
+        req.user = user;
+
         res.cookie('access_token' , accessToken , accessTokenOptions)
         res.cookie('refresh_token' , refreshToken , refreshTokenOptions)
 
@@ -302,6 +306,96 @@ export const updateUserInfo = CatchAsyncError( async (req : Request , res : Resp
         })
 
     } catch (error : any) {
+        return next(new ErrorHandler(error.message , 400))
+    }
+})
+
+interface IUpdatePassword {
+    oldPassword : string;
+    newPassword : string;
+}
+
+export const updateUserPassword = CatchAsyncError( async (req : Request , res : Response , next : NextFunction) => {
+    
+    try {
+        const {oldPassword , newPassword} = req.body as IUpdatePassword
+
+        if(!oldPassword ){
+            return  next(new ErrorHandler('please enter old Password' , 400))
+        }
+        if(!newPassword){
+            return  next(new ErrorHandler('please enter new Password' , 400))
+        }
+        
+        const userId = req.user?._id
+
+        const user =  await userModal.findById(userId).select("+password")
+
+
+         
+        if(user?.password === undefined){
+            return next(new ErrorHandler('Ivalid User', 400))
+        }
+
+        const isValidPassword  = await user.comparePassword(oldPassword)
+       
+        if(!isValidPassword){
+            return next(new ErrorHandler('Invalid old password', 400))
+        }
+
+        user.password = newPassword
+
+        await user?.save()
+        
+        await redis.set(userId as string , JSON.stringify(user))
+
+        res.status(200).json({
+            success : true,
+            user
+        })
+
+    } catch (error : any) {
+        return next(new ErrorHandler(error.message , 400))
+    }
+})
+
+export const updateUserAvatar = CatchAsyncError( async (req : Request , res : Response , next : NextFunction) => {
+    
+    try {
+        const {avatar} = req.body
+
+        
+        const userId = req.user?._id
+        
+        const user =  await userModal.findById(userId)
+
+        if(avatar && user){
+            if(user?.avatar?.public_id){
+                await cloudinary.v2.uploader.destroy(user?.avatar?.public_id)
+            }
+            
+            const myCloud = await cloudinary.v2.uploader.upload(avatar , {
+                folder : "avatars",
+                width : 150,
+            });
+            
+            user.avatar = {
+                public_id : myCloud.public_id,
+                url : myCloud.secure_url,
+            }
+        }
+
+        await user?.save()
+        
+        await redis.set(userId as string , JSON.stringify(user))
+        
+        res.status(200).json({
+            success : true,
+            user
+        })
+
+    } catch (error : any) {
+        console.log(error)
         return next(new ErrorHandler(error.message , 400))
     }
 })

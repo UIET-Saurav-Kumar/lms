@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { ErrorMiddleware } from './middleware/errorMiddleware'
 import userRouter from './routes/user_route'
+import courseRoute from './routes/course_route'
 
 export const app  = express()
 
@@ -28,6 +29,7 @@ app.use(cookieParser())  // cookieParser is a miidleware when help in readind th
 
 
 app.use('/apk/V1/auth' , userRouter)
+app.use('/apk/V1/auth' , courseRoute)
 
 app.get('/home' , (req : Request , res : Response , next : NextFunction) => {
       res.status(200).json({

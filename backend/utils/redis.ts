@@ -11,5 +11,5 @@ const ConnectRedis = () => {
     throw new Error('Redis is not connected')
 }
 
-export const redis = new Redis(process.env.REDIS_URI || '')
-// export const redis = new Redis(ConnectRedis())
+// export const redis = new Redis(process.env.REDIS_URI || '')
+export const redis = new Redis(ConnectRedis())

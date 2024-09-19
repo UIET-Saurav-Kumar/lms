@@ -16,14 +16,14 @@ const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '300' , 10
 const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '1200' , 10)
 
 export const accessTokenOptions : ITockenOption = {
-    expires : new Date(Date.now() + accessTokenExpire * 1000),
-    maxAge : accessTokenExpire * 1000 * 60,
+    expires : new Date(Date.now() + accessTokenExpire * 60 * 60 * 1000),
+    maxAge : accessTokenExpire * 1000 * 60 *60,
     httpOnly : true,    // Cookie is not accessible via JavaScript
     sameSite : "lax" 
 }
 
 export const refreshTokenOptions : ITockenOption = {
-    expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),  
+    expires: new Date(Date.now() +  refreshTokenExpire* 24 * 60 * 60 * 1000),  
     maxAge: refreshTokenExpire * 24 * 60 * 60 * 1000,   
     httpOnly : true,
     sameSite : "lax" 
@@ -57,4 +57,3 @@ export const sendToken = (user : IUser , statusCode : number , res : Response) =
     })
 
 }
-
